@@ -52,7 +52,6 @@ def convert_syntax(content, root):
         tid = uuid.uuid1().hex
         tid = tid.replace('-','')
         code_tuple.append([tid, code_fragment[0]])
-        print(code_fragment[0])
         content = content.replace(code_fragment[0], tid)
 
 
@@ -210,13 +209,11 @@ def get_Obsidian_heading(content, heading):
     print("Looking for "+heading)
     obsidian_heading = False
     headings = re.findall(r'^[ \t]*((=){1,6}) (.+?) \1', content, flags=re.MULTILINE)
-    print(headings)
+
     for h in headings:
         doku_heading = generate_doku_hid(h[2].strip())
         input_heading = generate_doku_hid(heading.strip())
-        print("> Checking if "+doku_heading+" == "+input_heading)
         if doku_heading.lower() == input_heading.lower():
-            print("> > Found")
             obsidian_heading = h[2].strip()
     return obsidian_heading
 
