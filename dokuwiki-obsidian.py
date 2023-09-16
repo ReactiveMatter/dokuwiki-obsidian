@@ -10,7 +10,7 @@ from datetime import datetime
 # Image as links
 
 # Define the source and destination folders
-source_folder = '/path/to/source'
+source_folder = 'path/to/source'
 destination_folder = 'path/to/destination'
 
 def clean_for_filename(text):
@@ -45,13 +45,16 @@ def convert_syntax(content, root):
     # You can add more conversion rules as needed
     
     # To preserve the code inside code block
-    code_fragments = re.findall(r'<code *(.*?)>((.|\n)*?)<\/code>', content)
+    code_fragments = re.findall(r'(<code(.*?)>((.|\n)*?)<\/code>)', content, flags=re.MULTILINE)
     code_tuple = []
 
-    for i in range(len(code_fragments)):
+    for code_fragment in code_fragments:
         tid = uuid.uuid1().hex
-        code_tuple.append([tid, code_fragments[i]])
-        content = re.sub(r'<code *(.*?)>((.|\n)*?)<\/code>', tid, content)
+        tid = tid.replace('-','')
+        code_tuple.append([tid, code_fragment[0]])
+        print(code_fragment[0])
+        content = content.replace(code_fragment[0], tid)
+
 
     # To convert DokuWiki headings to Obsidian headings:
     content = re.sub(r'^====== (.+?) ======', r'# \1', content, flags=re.MULTILINE)
@@ -74,7 +77,10 @@ def convert_syntax(content, root):
     # For include plugin; 
     # This is being done before links as later this will we converted to embedded link
     content = re.sub(r'\{\{(page|section)>([^|}]+)(?:\|(?:[^}]+))?\}\}', r"![[\2]]", content)
- 
+    
+  
+
+
     # To convert DokuWiki links to Obsidian links:
     content = re.sub(r'\[\[(.+?)\]\]', lambda match: convert_link(match, root), content)
     content = re.sub(r'\{\{([^|}]+)(?:\|(?:[^}]+))?\}\}', convert_media_link, content)
@@ -101,8 +107,9 @@ def convert_syntax(content, root):
     content = re.sub(r'<(WRAP|wrap)[ \t]*(.*?)>','', content)
     content = re.sub(r'<\/(WRAP|wrap)[ \t]*(.*?)>','', content)
     
-    for i in range(len(code_fragments)):
-        content = re.sub(code_tuple[i][0], '\n```'+code_tuple[i][1][0]+'\n'+code_tuple[i][1][1].strip()+'\n```', content)
+    for code in code_tuple:
+        code_content = re.sub(r'(<code(.*?)>((.|\n)*?)<\/code>)', r'\3',code[1],  flags=re.MULTILINE)
+        content = re.sub(code[0], '\n```\n'+code_content.strip()+'\n```', content)
 
     content = re.sub(r'\n\s*\n+', '\n\n', content)
     
@@ -170,17 +177,17 @@ def convert_internal_link(match, root):
 
     rel_file = os.path.join(*internal_link.split(':'))
     file = os.path.join(source_folder, "pages", rel_file)+".txt"
-
-    if os.path.exists(file):
-        with open(file, 'r', encoding='utf-8') as existing_file:
+    
+    if os.path.exists(os.path.join(root, rel_file)+".txt"):
+        with open(os.path.join(root, rel_file)+".txt", 'r', encoding='utf-8') as existing_file:
             content = existing_file.read()
             obsidian_path = extract_first_heading(content)
             if heading:
                 heading = get_Obsidian_heading(content, heading)
                 if heading:
                     obsidian_path = obsidian_path+"#"+heading
-    elif os.path.exists(os.path.join(root, rel_file)+".txt"):
-        with open(os.path.join(root, rel_file)+".txt", 'r', encoding='utf-8') as existing_file:
+    elif os.path.exists(file):
+        with open(file, 'r', encoding='utf-8') as existing_file:
             content = existing_file.read()
             obsidian_path = extract_first_heading(content)
             if heading:
@@ -213,7 +220,6 @@ def get_Obsidian_heading(content, heading):
             obsidian_heading = h[2].strip()
     return obsidian_heading
 
-# Generate dokuwiki heading id from the heading
 def generate_doku_hid(heading):
     doku_heading = re.sub(r' *: *','', heading)
     doku_heading = re.sub(r'[^a-zA-Z0-9:]', '_', doku_heading)
@@ -280,14 +286,13 @@ def convert_media_link(match):
 
     return ""
 
-# Regex for wrap plugin
 def wrap_regex(match):
     if len(match.group(2).strip()) > 0:
-        return "\n> [!tip | -nt]\n"+re.sub(r'^','> ',match.group(2).strip(), flags=re.MULTILINE)
+        return "\n> [!tip | cc-nt]\n"+re.sub(r'^','> ',match.group(2).strip(), flags=re.MULTILINE)
     else:
         return ""
 
-# For replacing carrot in tables
+
 def replace_carrot(match):
     
     c_count = match.group(0).count("^")
