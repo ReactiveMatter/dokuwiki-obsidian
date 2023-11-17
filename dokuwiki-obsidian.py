@@ -56,12 +56,12 @@ def convert_syntax(content, root):
 
 
     # To convert DokuWiki headings to Obsidian headings:
-    content = re.sub(r'^====== (.+?) ======', r'# \1', content, flags=re.MULTILINE)
-    content = re.sub(r'^===== (.+?) =====', r'## \1', content, flags=re.MULTILINE)
-    content = re.sub(r'^==== (.+?) ====', r'### \1', content, flags=re.MULTILINE)
-    content = re.sub(r'^=== (.+?) ===', r'#### \1', content, flags=re.MULTILINE)
-    content = re.sub(r'^== (.+?) ==', r'##### \1', content, flags=re.MULTILINE)
-    content = re.sub(r'^= (.+?) =', r'####### \1', content, flags=re.MULTILINE)
+    content = re.sub(r'^======(.+?)======', r'# \1', content, flags=re.MULTILINE)
+    content = re.sub(r'^=====(.+?)=====', r'## \1', content, flags=re.MULTILINE)
+    content = re.sub(r'^====(.+?)====', r'### \1', content, flags=re.MULTILINE)
+    content = re.sub(r'^===(.+?)===', r'#### \1', content, flags=re.MULTILINE)
+    content = re.sub(r'^==(.+?)==', r'##### \1', content, flags=re.MULTILINE)
+    content = re.sub(r'^=(.+?)=', r'####### \1', content, flags=re.MULTILINE)
 
     content = re.sub(r'^# .+', '', content, count=1)
     
