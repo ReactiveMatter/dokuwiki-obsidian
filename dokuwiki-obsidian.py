@@ -10,7 +10,7 @@ from datetime import datetime
 # Image as links
 
 # Define the source and destination folders
-source_folder = 'path/to/source'
+source_folder = 'path/to/source' # The data folder of the Dokuwiki installation
 destination_folder = 'path/to/destination'
 
 def clean_for_filename(text):
