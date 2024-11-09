@@ -6,11 +6,8 @@ import urllib.parse
 import uuid
 from datetime import datetime
 
-# Errors to be fixed
-# Image as links
-
 # Define the source and destination folders
-source_folder = 'path/to/source' # The data folder of the Dokuwiki installation
+source_folder = 'path/to/source'
 destination_folder = 'path/to/destination'
 
 def clean_for_filename(text):
