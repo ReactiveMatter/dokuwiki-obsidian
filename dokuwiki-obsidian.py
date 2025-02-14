@@ -297,7 +297,12 @@ def replace_carrot(match):
 
 # Function to check if a file with the same name exists and whether it should be overwritten
 def should_write(file_path, new_content, dokuwiki_path):
-    
+
+    if os.path.isfile(dokuwiki_path):
+        return False
+    else:
+        return True
+
     return True
     # Get the DokuWiki file's modification date
     dokuwiki_modification_date = datetime.fromtimestamp(os.path.getmtime(dokuwiki_path))
