@@ -4,11 +4,8 @@ import hashlib
 import shutil
 import urllib.parse
 import uuid
+import argparse
 from datetime import datetime
-
-# Define the source and destination folders
-source_folder = 'path/to/source'
-destination_folder = 'path/to/destination'
 
 def clean_for_filename(text):
     # Define a list of characters not allowed in file names
@@ -320,6 +317,15 @@ def should_write(file_path, new_content, dokuwiki_path):
                 return True  # DokuWiki file is more recent and Hash is different so write it
 
     return False  # File should not be overwritten
+
+# Define the source and destination folders
+parser = argparse.ArgumentParser()
+parser.add_argument("--src", help="souce_folder should be the data folder of the DokuWiki installation and should have pages folder from the .txt files will be parsed", type=str)
+parser.add_argument("--dst", help="destination_folder is the folder where the output will be generated", type=str)
+args = vars(parser.parse_args())
+
+source_folder = args['src']
+destination_folder = args['dst']
 
 # Walk through the source folder
 for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
