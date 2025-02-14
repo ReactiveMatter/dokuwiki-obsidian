@@ -363,6 +363,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
                 # Write the converted content to the Obsidian file
                 with open(obsidian_path, 'w', encoding='utf-8') as obsidian_file:
                     obsidian_file.write(obsidian_content)
+                shutil.copystat(dokuwiki_path, obsidian_path)
             else:
                 print("The file already exits and hash matches. Overwriting skipped. \n")
 
