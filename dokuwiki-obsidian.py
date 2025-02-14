@@ -5,6 +5,7 @@ import shutil
 import urllib.parse
 import uuid
 import argparse
+from pathlib import Path
 from datetime import datetime
 
 def clean_for_filename(text):
@@ -25,14 +26,14 @@ def clean_for_filename(text):
     return text
 
 # Function to extract the first heading from DokuWiki content
-def extract_first_heading(content):
+def extract_first_heading(filename, content):
     # Use regular expression to find the first heading
     match = re.search(r'====== (.+?) ======', content)
     if match:
         heading_text = match.group(1)
         return clean_for_filename(heading_text)
     else:
-        return "Untitled"  # If no heading is found, use a default name
+        return clean_for_filename(Path(filename).stem) # If no heading is found, use the filename
 
 # Function to convert DokuWiki syntax to Obsidian
 def convert_syntax(content, root):
@@ -174,7 +175,7 @@ def convert_internal_link(match, root):
     if os.path.exists(os.path.join(root, rel_file)+".txt"):
         with open(os.path.join(root, rel_file)+".txt", 'r', encoding='utf-8') as existing_file:
             content = existing_file.read()
-            obsidian_path = extract_first_heading(content)
+            obsidian_path = extract_first_heading(rel_file, content)
             if heading:
                 heading = get_Obsidian_heading(content, heading)
                 if heading:
@@ -182,7 +183,7 @@ def convert_internal_link(match, root):
     elif os.path.exists(file):
         with open(file, 'r', encoding='utf-8') as existing_file:
             content = existing_file.read()
-            obsidian_path = extract_first_heading(content)
+            obsidian_path = extract_first_heading(file, content)
             if heading:
                 heading = get_Obsidian_heading(content, heading)
                 if heading:
@@ -340,7 +341,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
             with open(dokuwiki_path, 'r', encoding='utf-8') as dokuwiki_file:
                 dokuwiki_content = dokuwiki_file.read()
 
-            title = extract_first_heading(dokuwiki_content)
+            title = extract_first_heading(file, dokuwiki_content)
 
             print("Converting "+ os.path.join(os.path.relpath(root, os.path.join(source_folder, 'pages')), file)+"\n")
 
