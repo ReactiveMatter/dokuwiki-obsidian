@@ -4,11 +4,9 @@ import hashlib
 import shutil
 import urllib.parse
 import uuid
+import argparse
+from pathlib import Path
 from datetime import datetime
-
-# Define the source and destination folders
-source_folder = 'path/to/source'
-destination_folder = 'path/to/destination'
 
 def clean_for_filename(text):
     # Define a list of characters not allowed in file names
@@ -28,14 +26,14 @@ def clean_for_filename(text):
     return text
 
 # Function to extract the first heading from DokuWiki content
-def extract_first_heading(content):
+def extract_first_heading(filename, content):
     # Use regular expression to find the first heading
     match = re.search(r'====== (.+?) ======', content)
     if match:
         heading_text = match.group(1)
         return clean_for_filename(heading_text)
     else:
-        return "Untitled"  # If no heading is found, use a default name
+        return clean_for_filename(Path(filename).stem) # If no heading is found, use the filename
 
 # Function to convert DokuWiki syntax to Obsidian
 def convert_syntax(content, root):
@@ -177,7 +175,7 @@ def convert_internal_link(match, root):
     if os.path.exists(os.path.join(root, rel_file)+".txt"):
         with open(os.path.join(root, rel_file)+".txt", 'r', encoding='utf-8') as existing_file:
             content = existing_file.read()
-            obsidian_path = extract_first_heading(content)
+            obsidian_path = extract_first_heading(rel_file, content)
             if heading:
                 heading = get_Obsidian_heading(content, heading)
                 if heading:
@@ -185,7 +183,7 @@ def convert_internal_link(match, root):
     elif os.path.exists(file):
         with open(file, 'r', encoding='utf-8') as existing_file:
             content = existing_file.read()
-            obsidian_path = extract_first_heading(content)
+            obsidian_path = extract_first_heading(file, content)
             if heading:
                 heading = get_Obsidian_heading(content, heading)
                 if heading:
@@ -300,7 +298,12 @@ def replace_carrot(match):
 
 # Function to check if a file with the same name exists and whether it should be overwritten
 def should_write(file_path, new_content, dokuwiki_path):
-    
+
+    if os.path.isfile(file_path):
+        return False
+    else:
+        return True
+
     return True
     # Get the DokuWiki file's modification date
     dokuwiki_modification_date = datetime.fromtimestamp(os.path.getmtime(dokuwiki_path))
@@ -321,6 +324,15 @@ def should_write(file_path, new_content, dokuwiki_path):
 
     return False  # File should not be overwritten
 
+# Define the source and destination folders
+parser = argparse.ArgumentParser()
+parser.add_argument("--src", help="souce_folder should be the data folder of the DokuWiki installation and should have pages folder from the .txt files will be parsed", type=str)
+parser.add_argument("--dst", help="destination_folder is the folder where the output will be generated", type=str)
+args = vars(parser.parse_args())
+
+source_folder = args['src']
+destination_folder = args['dst']
+
 # Walk through the source folder
 for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
     for file in files:
@@ -329,7 +341,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
             with open(dokuwiki_path, 'r', encoding='utf-8') as dokuwiki_file:
                 dokuwiki_content = dokuwiki_file.read()
 
-            title = extract_first_heading(dokuwiki_content)
+            title = extract_first_heading(file, dokuwiki_content)
 
             print("Converting "+ os.path.join(os.path.relpath(root, os.path.join(source_folder, 'pages')), file)+"\n")
 
@@ -351,6 +363,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
                 # Write the converted content to the Obsidian file
                 with open(obsidian_path, 'w', encoding='utf-8') as obsidian_file:
                     obsidian_file.write(obsidian_content)
+                shutil.copystat(dokuwiki_path, obsidian_path)
             else:
                 print("The file already exits and hash matches. Overwriting skipped. \n")
 
