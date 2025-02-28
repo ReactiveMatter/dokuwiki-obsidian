@@ -297,41 +297,47 @@ def replace_carrot(match):
     return result
 
 # Function to check if a file with the same name exists and whether it should be overwritten
-def should_write(file_path, new_content, dokuwiki_path):
+def should_write(file_path, new_content, dokuwiki_path, overwrite_mode):
 
-    if os.path.isfile(file_path):
-        return False
-    else:
-        return True
-
-    return True
-    # Get the DokuWiki file's modification date
-    dokuwiki_modification_date = datetime.fromtimestamp(os.path.getmtime(dokuwiki_path))
-
-    if not os.path.exists(file_path):
-        return True  # File doesn't exist, so write it
     
-    # Check if the content hash is different
-    with open(file_path, 'r', encoding='utf-8') as existing_file:
-        existing_content = existing_file.read()
-        existing_hash = hashlib.md5(existing_content.encode()).hexdigest()
-        new_hash = hashlib.md5(new_content.encode()).hexdigest()
-        if existing_hash != new_hash:
-            # Check if the DokuWiki file is more recent
-            file_modification_date = datetime.fromtimestamp(os.path.getmtime(file_path))
-            if file_modification_date < dokuwiki_modification_date:
-                return True  # DokuWiki file is more recent and Hash is different so write it
+    if overwrite_mode == 0 and os.path.isfile(file_path):
+        return False
+    
+    if overwrite_mode == 1:
+        return True
+    elif overwrite_mode == 2:
+        # Get the DokuWiki file's modification date
+        dokuwiki_modification_date = datetime.fromtimestamp(os.path.getmtime(dokuwiki_path))
+
+        if not os.path.exists(file_path):
+            return True  # File doesn't exist, so write it
+        
+        # Check if the content hash is different
+        with open(file_path, 'r', encoding='utf-8') as existing_file:
+            existing_content = existing_file.read()
+            existing_hash = hashlib.md5(existing_content.encode()).hexdigest()
+            new_hash = hashlib.md5(new_content.encode()).hexdigest()
+            if existing_hash != new_hash:
+                # Check if the DokuWiki file is more recent
+                file_modification_date = datetime.fromtimestamp(os.path.getmtime(file_path))
+                if file_modification_date < dokuwiki_modification_date:
+                    return True  # DokuWiki file is more recent and Hash is different so write it
 
     return False  # File should not be overwritten
 
 # Define the source and destination folders
 parser = argparse.ArgumentParser()
-parser.add_argument("--src", help="souce_folder should be the data folder of the DokuWiki installation and should have pages folder from the .txt files will be parsed", type=str)
-parser.add_argument("--dst", help="destination_folder is the folder where the output will be generated", type=str)
+parser.add_argument("--src", help="souce_folder should be the data folder of the DokuWiki installation and should have pages folder from the .txt files will be parsed", type=str, required=True)
+parser.add_argument("--dst", help="destination_folder is the folder where the output will be generated", type=str, default='output')
+parser.add_argument("--overwrite", help="Overwrite file if it exists in destination", type=int, default=0)
 args = vars(parser.parse_args())
+
+
 
 source_folder = args['src']
 destination_folder = args['dst']
+overwrite_mode = args['overwrite']
+
 
 # Walk through the source folder
 for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
@@ -343,7 +349,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
 
             title = extract_first_heading(file, dokuwiki_content)
 
-            print("Converting "+ os.path.join(os.path.relpath(root, os.path.join(source_folder, 'pages')), file)+"\n")
+            print("Converting "+ os.path.join(os.path.relpath(root, os.path.join(source_folder, 'pages')), file))
 
             # Convert DokuWiki syntax to Obsidian syntax
             obsidian_content = convert_syntax(dokuwiki_content, root)
@@ -357,7 +363,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
             obsidian_path = os.path.join(obsidian_folder, title+ '.md')  # Change file extension to .md
 
             # Check if the file should be overwritten
-            if should_write(obsidian_path, obsidian_content, dokuwiki_path):
+            if should_write(obsidian_path, obsidian_content, dokuwiki_path, overwrite_mode ):
                 # Create directories
                 os.makedirs(os.path.dirname(obsidian_path), exist_ok=True)
                 # Write the converted content to the Obsidian file
@@ -365,7 +371,7 @@ for root, _, files in os.walk(os.path.join(source_folder, 'pages')):
                     obsidian_file.write(obsidian_content)
                 shutil.copystat(dokuwiki_path, obsidian_path)
             else:
-                print("The file already exits and hash matches. Overwriting skipped. \n")
+                print("The file already exits and hash matches. Overwriting skipped.")
 
 # Copy media files from DokuWiki's media folder to Obsidian's media folder
 media_source_folder = os.path.join(source_folder, 'media')
