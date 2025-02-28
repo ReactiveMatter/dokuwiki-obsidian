@@ -19,7 +19,6 @@ def clean_for_filename(text):
 
     # Remove leading and trailing hyphens
     text = text.strip('-')
-
     # Remove leading and trailing whitespaces
     text = text.strip()
 
@@ -71,14 +70,10 @@ def convert_syntax(content, root):
     # For include plugin; 
     # This is being done before links as later this will we converted to embedded link
     content = re.sub(r'\{\{(page|section)>([^|}]+)(?:\|(?:[^}]+))?\}\}', r"![[\2]]", content)
-    
-  
-
 
     # To convert DokuWiki links to Obsidian links:
     content = re.sub(r'\[\[(.+?)\]\]', lambda match: convert_link(match, root), content)
     content = re.sub(r'\{\{([^|}]+)(?:\|(?:[^}]+))?\}\}', convert_media_link, content)
-
 
     # Coverting tables
     content = re.sub(r'^[ \t]*?\^(.*)(\^|\|)$', replace_carrot, content, flags=re.MULTILINE)
@@ -232,7 +227,6 @@ def contains(needles, content):
             return True
 
     return False
-
 
 # convert media link
 def convert_media_link(match): 
